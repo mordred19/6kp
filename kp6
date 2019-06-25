@@ -1,0 +1,343 @@
+PROGRAM.C
+// 6 задание, распечатать сведения 
+// обо всех компьютерах серверах
+// и рабочих станциях
+
+#include <stdio.h>
+#include <string.h>
+#include "components.h"
+
+int main(int argc, char *argv[])
+{
+	
+	components p;
+	FILE *file = NULL;
+	
+	if (argc < 3)
+	{
+		printf("Использование: %s файл флаг\nФлаги:\n-f - печать базы данных\n-p - выполнить задание\n", argv[0]);
+		return 1;
+	}
+
+	file = fopen(argv[1], "rb");
+	if (file == NULL)
+	{
+		printf("Произошла ошибка при открытии файла\n");
+		return 1;
+	}
+
+	if (!strcmp(argv[2], "-f"))
+		{
+			printf("+-----------+----------------------+------------+--------------------+-----------------+-----------------------+---------------------------+------------------------+------+\n");
+			printf("|  Фамилия  |Число и тип процессора|V памяти(гб)|Тип видеоконтроллера|V видеопамяти(гб)|Тип(SCSI IDE, ATA Sata)|Число и емкость винчестеров|Кол-во интегр. устройств|  ОС  |\n");
+			printf("+-----------+----------------------+------------+--------------------+-----------------+-----------------------+---------------------------+------------------------+------+\n");
+
+			while (fread(&p, sizeof(p), 1, file) == 1)
+			{
+				printf("|%11s|%10d%12d|%12d|%20s|%17d|%23s|%10d%17d|%24d|%6s|\n",
+					p.name,
+					p.cproc,
+					p.tproc,
+					p.memory,
+					p.typev,
+					p.vmemory,
+					p.carrier,
+					p.cquantity,
+					p.capacity,
+					p.devices,
+					p.os
+			);
+
+			printf("+-----------+----------------------+------------+--------------------+-----------------+-----------------------+---------------------------+------------------------+------+\n");
+		}
+	}
+	
+	else if (!strcmp(argv[2], "-p"))
+	{
+		while (fread(&p, sizeof(p), 1, file) == 1)
+		{
+			int k = p.cproc;
+			int m = p.memory;
+			if (k > 1 || m > 32)
+			{
+				printf("Компьютер-сервер\n|%11s|%11d %13d|%12d|%20s|%17d|%23s|%10d %17d|%24d|%6s|\n",
+					p.name,
+					p.cproc,
+					p.tproc,
+					p.memory,
+					p.typev,
+					p.vmemory,
+					p.carrier,
+					p.cquantity,
+					p.capacity,
+					p.devices,
+					p.os
+					);
+				printf("+-----------+----------------------+------------+--------------------+-----------------+-----------------------+---------------------------+------------------------+------+\n");
+			}
+			else 
+			{
+				printf("Рабочая_станция\n|%11s|%11d %13d|%12d|%20s|%17d|%23s|%10d %17d|%24d|%6s|\n",
+					p.name,
+					p.cproc,
+					p.tproc,
+					p.memory,
+					p.typev,
+					p.vmemory,
+					p.carrier,
+					p.cquantity,
+					p.capacity,
+					p.devices,
+					p.os
+					);
+				printf("+-----------+----------------------+------------+--------------------+-----------------+-----------------------+---------------------------+------------------------+------+\n");
+			}	
+		}
+	}
+
+	fclose(file);
+
+	return 0;
+}
+
+GENERATOR.C
+#include <stdio.h>
+#include <string.h>
+#include "components.h"
+
+int readComponents(components *p);
+
+int main(int argc, char *argv[])
+
+{
+
+	components p;
+
+	FILE *file = NULL;
+
+	if (argc != 3)
+
+	{
+
+		printf("Использование: %s файл флаг\nФлаги:\n-a - создание нового файла\n-b - добавить запись в конец\n-с - добавить запись в начало\n", argv[0]);
+
+		return 1;
+
+	}
+
+	if (!strcmp(argv[2], "-a"))
+
+	{
+
+		file = fopen(argv[1], "wb");
+
+		if (file == NULL)
+
+		{
+
+			printf("Произошла ошибка при открытии файла\n");
+
+			return 1;
+
+		}
+
+		printf("Образец:\n");
+
+		printf("Smirnov 1 32 8 PCI 2 SCSI/IDE 1 256 15 WIN\n");
+
+		while (readComponents(&p))//чтобы прервать ввод Ctrl+D
+
+		fwrite(&p, sizeof(p), 1, file);
+
+		fclose(file);
+
+		return 0;
+
+	}
+
+	if (!strcmp(argv[2], "-b"))
+
+	{
+
+		file = fopen(argv[1], "ab");
+
+		if (file == NULL)
+
+		{
+
+			printf("Произошла ошибка при открытии файла\n");
+
+			return 1;
+
+		}
+
+		printf("Образец:\n");
+
+		printf("Smirnov 1 32 8 PCI 2 SCSI/IDE 1 256 15 WIN\n");
+
+		while (readComponents(&p))//чтобы прервать ввод Ctrl+D
+
+		fwrite(&p, sizeof(p), 1, file);
+
+		fclose(file);
+
+		return 0;
+
+	}
+
+	if (!strcmp(argv[2], "-c"))
+
+	{
+
+		file = fopen(argv[1], "rb");
+
+		if (file == NULL)
+
+		{
+
+		printf("Произошла ошибка при открытии файла\n");
+
+		return 1;
+
+	}
+
+	FILE *temp = fopen("temp","wb");
+
+	while (fread(&p, sizeof(p), 1, file) == 1)//чтобы прервать ввод Ctrl+D
+
+	fwrite(&p, sizeof(p), 1, temp);
+
+	fclose(file);
+
+	fclose(temp);
+
+	file = fopen(argv[1], "wb");
+
+	if (file == NULL)
+
+	{
+
+		printf("Произошла ошибка при открытии файла\n");
+
+		return 1;
+
+	}
+
+	printf("Образец:\n");
+
+	printf("Smirnov 1 32 8 PCI 2 SCSI/IDE 1 256 15 WIN\n");
+
+	while (readComponents(&p))//чтобы прервать ввод Ctrl+D
+
+	fwrite(&p, sizeof(p), 1, file);
+
+	temp = fopen("temp","rb");
+
+	while (fread(&p, sizeof(p), 1, temp) == 1)
+
+	{
+
+		fwrite(&p, sizeof(p), 1, file);
+
+	}
+
+	fclose(temp);
+
+	remove("temp");
+
+	fclose(file);
+
+	return 0;
+
+	}
+
+}
+
+int readComponents(components *p)
+{
+	int ret = scanf("%s %d %d %d %s %d %s %d %d %d %s",
+		p->name,
+		&p->cproc,
+		&p->tproc,
+		&p->memory,
+		p->typev,
+		&p->vmemory,
+		p->carrier,
+		&p->cquantity,
+		&p->capacity,
+		&p->devices,
+		p->os
+
+);
+
+return (ret == 11);
+}
+
+#ifndef COMPONENTS_H
+#define COMPONENTS_H
+
+typedef struct _components
+{
+	char name[11];   //Фамилия держателя
+	int cproc;       //Число процессоров
+	int tproc;	     //Тип процессоров
+	int memory;		 //Объем памяти
+	char typev[20];   //Тип видеоконтроллера
+	int vmemory;     //Объем видеопамяти
+	char carrier[23];//Тип ЖД подключения
+	int cquantity;	 //Число винчестеров
+	int capacity;	 //Емкость винчестеров
+	int devices;	 //Количество контроллеров и внешних устройств
+	char os[6];     //Операционная система
+} components;
+
+#endif
+
+MAKEFILE
+all: generator program
+generator: generator.o
+	gcc generator.o -o generator
+lab.o: generator.c
+	gcc -c generator.c
+program: program.o
+	gcc program.o -o program
+program.o: program.c
+	gcc -c program.c
+clean:
+	rm -rf*.o
+
+user1@comp:~/home/kp/6kp$ make
+cc    -c -o generator.o generator.c
+gcc generator.o -o generator
+user1@comp:~/home/kp/6kp$ ./generator data -a
+Образец:
+Smirnov 1 32 8 PCI 2 SCSI/IDE 1 256 15 WIN
+Vasilyev 3 64 128 AGP 6 ATA/SATA 1 4096 10 DEBIAN
+Alekseev 1 64 16 PCI 4 ATA/SATA 1 1024 16 UBUNTU
+Egorov 4 64 128 AGP 4 ATA/SATA 2 2048 11 FREEBSD
+Nikolaev 1 32 16 PCI 2 ATA/SATA 2 1024 15 WIN
+Stepanov 1 32 16 PCI 2 ATA/SATA 1 512 16 WIN
+Pavlov 2 64 32 AGP 4 ATA/SATA 2 1024 10 DEBIAN
+Petrov 2 64 64 AGP 2 ATA/SATA 2 2048 10 DEBIA 
+user1@comp:~/home/kp/6kp$ ./program data -p
+Компьютер-сервер
+|   Vasilyev|          3            64|         128|                 AGP|                6|               ATA/SATA|         1              4096|                      10|DEBIAN|
++-----------+-------------------------+------------+--------------------+-----------------+-----------------------+----------------------------+------------------------+------+
+Рабочая_станция
+|   Alekseev|          1            64|          16|                 PCI|                4|               ATA/SATA|         1              1024|                      16|UBUNTU|
++-----------+-------------------------+------------+--------------------+-----------------+-----------------------+----------------------------+------------------------+------+
+Компьютер-сервер
+|     Egorov|          4            64|         128|                 AGP|                4|               ATA/SATA|         2              2048|                      11|FREEBSD|
++-----------+-------------------------+------------+--------------------+-----------------+-----------------------+----------------------------+------------------------+------+
+Рабочая_станция
+|   Nikolaev|          1            32|          16|                 PCI|                2|               ATA/SATA|         2              1024|                      15|   WIN|
++-----------+-------------------------+------------+--------------------+-----------------+-----------------------+----------------------------+------------------------+------+
+Рабочая_станция
+|   Stepanov|          1            32|          16|                 PCI|                2|               ATA/SATA|         1               512|                      16|   WIN|
++-----------+-------------------------+------------+--------------------+-----------------+-----------------------+----------------------------+------------------------+------+
+Компьютер-сервер
+|     Pavlov|          2            64|          32|                 AGP|                4|               ATA/SATA|         2              1024|                      10|DEBIAN|
++-----------+-------------------------+------------+--------------------+-----------------+-----------------------+----------------------------+------------------------+------+
+Компьютер-сервер
+|     Petrov|          2            64|          64|                 AGP|                2|               ATA/SATA|         2              2048|                      10| DEBIA|
++-----------+-------------------------+------------+--------------------+-----------------+-----------------------+----------------------------+------------------------+------+
